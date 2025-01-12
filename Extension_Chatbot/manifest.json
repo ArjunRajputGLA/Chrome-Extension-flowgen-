@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "AI Web Assistant",
+  "version": "1.0",
+  "description": "An AI-powered web assistant using Groq API",
+  "permissions": [
+    "storage",
+    "scripting",
+    "activeTab",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "https://api.groq.com/*",
+    "https://www.google.com/*",
+    "https://www.youtube.com/*",
+    "https://www.facebook.com/*",
+    "https://www.instagram.com/*",
+    "https://www.linkedin.com/*",
+    "https://twitter.com/*",
+    "https://www.reddit.com/*",
+    "https://www.tumblr.com/*",
+    "https://www.pinterest.com/*",
+    "https://www.quora.com/*",
+    "https://www.wikipedia.org/*",
+    "https://www.imdb.com/*",
+    "https://www.rottentomatoes.com/*",
+    "https://www.metacritic.com/*",
+    "https://www.aws.amazon.com",
+    "https://github.com/*",
+    "https://stackoverflow.com/*",
+    "https://developer.mozilla.org/*"
+  ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "action": {
+    "default_title": "AI Web Assistant"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
