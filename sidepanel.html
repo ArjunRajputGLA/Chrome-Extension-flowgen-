@@ -1,11 +1,29 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Web Deployment Assistant</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deployment Assistant</title>
 </head>
 <body>
-    <div id="instructions-container"></div>
-    <button id="nextStep">Next Step</button>    
+  <!-- Instructions and Analysis Section -->
+  <div id="instructions-container">Welcome! Click 'Next Step' to begin.</div>
+  <div>
+    <h3>Analysis</h3>
+    <div id="analysis-output"></div>
+  </div>
+  <div>
+    <h3>Element Order</h3>
+    <div id="element-order-list"></div>
+  </div>
+
+  <!-- Button for Next Step -->
+  <button id="nextStep">Next Step</button>
+
+  <!-- Error message container -->
+  <div id="error-message" style="color: red;"></div>
+
+  <!-- Link to the external JavaScript file -->
   <script src="scripts/sidepanel.js"></script>
 </body>
 </html>

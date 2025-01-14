@@ -22,6 +22,7 @@ async function fetchStartingInstructions(platform) {
 
 // Function to update the side panel dynamically
 function updateSidePanel(description) {
+  console.log("Updating side panel with:", description);
   chrome.runtime.sendMessage({ action: "updateSidePanel", description });
 }
 
@@ -29,6 +30,7 @@ function updateSidePanel(description) {
 async function nextStep(platform) {
   try {
     const step = steps[currentStep];
+
     if (!step && currentStep === null) {
       const startingInstructions = await fetchStartingInstructions(platform);
       updateSidePanel(startingInstructions);
@@ -36,15 +38,20 @@ async function nextStep(platform) {
       return;
     }
 
-    const element = document.querySelector(step.selector);
-    if (element) {
-      highlightElement(element, step.arrowGif); // Highlight the element
-      updateSidePanel(step.description); // Update the side panel
-      currentStep++;
+    if (step) {
+      const element = document.querySelector(step.selector);
+      if (element) {
+        highlightElement(element, step.arrowGif);
+        updateSidePanel(step.description);
+        currentStep++;
+      } else {
+        updateSidePanel(`Step ${currentStep + 1}: Element not found. Please locate it manually.`);
+        currentStep++;
+      }
     } else {
-      updateSidePanel(`Step ${currentStep + 1}: Element not found. Please locate it manually.`);
-      currentStep++;
+      updateSidePanel("No more steps to process.");
     }
+
   } catch (error) {
     console.error("Error during next step:", error);
     updateSidePanel("Failed to fetch the next step. Please try again.");
@@ -82,19 +89,70 @@ async function sendToGemini(layoutData) {
 
     // Process and display Gemini response in the side panel
     updateSidePanel(result.analysis || "Inference complete. Check console for details.");
+
+    // Handle element order if available
+    let elementOrderList = document.getElementById("element-order-list");
+    if (!elementOrderList) {
+      elementOrderList = document.createElement("div");
+      elementOrderList.id = "element-order-list";
+      document.body.appendChild(elementOrderList);
+    }
+
+    // Handle element order if available
+    elementOrderList.innerHTML = "";  // Clear previous content
+    if (Array.isArray(result.element_order)) {
+      result.element_order.forEach((item) => {
+        const listItem = document.createElement("div");
+        listItem.textContent = `${item.id}: ${item.content}`;
+        elementOrderList.appendChild(listItem);
+      });
+    } else {
+      console.warn("element_order is not an array:", result.element_order);
+    }    
+
   } catch (error) {
     console.error("Error sending data to Gemini:", error);
     updateSidePanel("Failed to process layout data. Please try again.");
   }
 }
 
-// Message Listener: Extract layout and respond to background
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "getPageLayout") {
+
+// Initialize MutationObserver to monitor DOM changes
+function initializeObserver() {
+  const observer = new MutationObserver(() => {
+    const newContent = document.querySelector("your-target-selector");
+    if (newContent) {
+      chrome.runtime.sendMessage({
+        action: "updateSidePanel",
+        description: newContent.innerText,
+      });
+    }
+  });
+
+  // Start observing the DOM for changes
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+
+  console.log("[DEBUG] MutationObserver initialized.");
+}
+
+// Message Listener: Handle messages from side panel or background
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "getPageLayout") {
     const layoutData = extractLayoutData();
     sendResponse({ layoutData });
-  } else if (request.action === "nextStep") {
-    nextStep(request.platform).catch(console.error);
+  } else if (message.action === "nextStep") {
+    nextStep(message.platform)
+      .then(() => {
+        sendResponse({ status: "success", description: "Next step executed." });
+      })
+      .catch((error) => {
+        console.error("Error executing next step:", error);
+        sendResponse({ status: "error", description: "Failed to execute next step." });
+      });
+    return true; // Keep the message channel open for async responses
   }
 });
 
@@ -108,4 +166,7 @@ chrome.storage.local.get("currentPlatform", async (data) => {
   // Extract and send layout data for Gemini inference
   const layoutData = extractLayoutData();
   await sendToGemini(layoutData);
+
+  // Initialize the MutationObserver
+  initializeObserver();
 });

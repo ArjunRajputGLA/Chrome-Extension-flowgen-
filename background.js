@@ -37,7 +37,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       // Enable the side panel with the corresponding HTML path
       await chrome.sidePanel.setOptions({
         tabId,
-        path: "sidepanel.html",
+        path: "sidepanel.html",  // Corrected path
         enabled: true,
       });
 
@@ -46,7 +46,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       // Disable the side panel for unrelated pages
       await chrome.sidePanel.setOptions({ 
         tabId,
-        path: "sidepanl.html",
+        path: "sidepanel.html",  // Corrected path
         enabled: false });
       console.log("[INFO] No matching platform detected. Side panel disabled.");
     }
