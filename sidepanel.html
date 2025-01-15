@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Web Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <div class="header-icon">AI</div>
+            <h1>Web Assistant</h1>
+        </div>
+        <button class="clear-button" id="clearButton">Clear Chat</button>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="message bot-message">
+            Hello! 👋 I'm your AI web assistant powered by Groq. I can help you with:
+            • Summarizing web pages
+            • Answering questions about the content
+            • Finding specific information
+            • Explaining complex topics
+            
+            How can I assist you today?
+            <div class="timestamp"></div>
+        </div>
+    </div>
+
+    <div class="suggestion-chips">
+        <button class="suggestion-chip">Summarize this page</button>
+        <button class="suggestion-chip">Explain this content</button>
+    </div>
+
+    <div class="input-container">
+        <div class="input-wrapper">
+            <textarea 
+                class="message-input" 
+                placeholder="Type your message..." 
+                rows="1" 
+                id="messageInput"
+            ></textarea>
+            <button class="send-button" id="sendButton">Send</button>
+        </div>
+    </div>
+    <script src="chat.js"></script>
+</body>
+</html>
