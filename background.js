@@ -1,4 +1,3 @@
-// Map of known deployment platforms
 const DEPLOYMENT_SITES = {
   "vercel.com": "Vercel",
   "netlify.com": "Netlify",
@@ -13,42 +12,39 @@ const DEPLOYMENT_SITES = {
  * @returns {string|null} - Returns the platform name or null if not found.
  */
 function detectPlatform(url) {
-  const hostname = new URL(url).hostname;
-  for (const site in DEPLOYMENT_SITES) {
-    if (hostname.includes(site)) {
-      return DEPLOYMENT_SITES[site];
-    }
+  try {
+    const hostname = new URL(url).hostname;
+    return Object.entries(DEPLOYMENT_SITES).find(([site]) => 
+      hostname.includes(site))?.[1] ?? null;
+  } catch (error) {
+    console.error('[ERROR] Failed to parse URL:', error);
+    return null;
   }
-  return null;
 }
 
-/**
- * Listener for tab updates.
- * Injects the content script and manages the side panel visibility based on the URL.
- */
+// Listen for tab updates
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete" && tab.url) {
     const platform = detectPlatform(tab.url);
-
-    if (platform) {
-      // Save the current platform to storage for other scripts to access
-      await chrome.storage.local.set({ currentPlatform: platform });
-
-      // Enable the side panel with the corresponding HTML path
-      await chrome.sidePanel.setOptions({
-        tabId,
-        path: "sidepanel.html",  // Corrected path
-        enabled: true,
-      });
-
-      console.log(`[INFO] Platform detected: ${platform}`);
-    } else {
-      // Disable the side panel for unrelated pages
-      await chrome.sidePanel.setOptions({ 
-        tabId,
-        path: "sidepanel.html",  // Corrected path
-        enabled: false });
-      console.log("[INFO] No matching platform detected. Side panel disabled.");
+    
+    try {
+      if (platform) {
+        await chrome.storage.local.set({ currentPlatform: platform });
+        await chrome.sidePanel.setOptions({
+          tabId,
+          path: "sidepanel.html",
+          enabled: true
+        });
+        console.log(`[INFO] Platform detected: ${platform}`);
+      } else {
+        await chrome.sidePanel.setOptions({
+          tabId,
+          enabled: false
+        });
+        console.log("[INFO] No matching platform detected");
+      }
+    } catch (error) {
+      console.error('[ERROR] Failed to update side panel:', error);
     }
   }
 });

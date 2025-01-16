@@ -2,27 +2,38 @@
   "manifest_version": 3,
   "name": "Deployment Helper",
   "version": "1.0",
-  "description": "Helps developers deploy their websites with step-by-step guidance and optional automation.",
+  "description": "Helps developers deploy their websites with step-by-step guidance",
   "background": {
     "service_worker": "background.js"
   },
-  "permissions": ["sidePanel", "tabs", "activeTab", "storage", "scripting"],
+  "permissions": [
+    "sidePanel",
+    "tabs",
+    "storage",
+    "scripting"
+  ],
   "host_permissions": [
     "*://*.netlify.com/*",
     "*://*.vercel.com/*",
     "*://*.github.io/*",
     "*://*.render.com/*",
-    "*://cloud.google.com/*"
+    "*://cloud.google.com/*",
+    "*://localhost/*"
   ],
   "content_scripts": [
     {
-      "matches": ["https://*/*", "http://*/*"],
+      "matches": [
+        "*://*.netlify.com/*",
+        "*://*.vercel.com/*",
+        "*://*.github.io/*",
+        "*://*.render.com/*",
+        "*://cloud.google.com/*"
+      ],
       "js": ["content.js"]
     }
   ],
   "side_panel": {
-    "default_path": "sidepanel.html",
-    "open_panel_action": "openSidebar"
+    "default_path": "sidepanel.html"
   },
   "action": {
     "default_popup": "popup.html"

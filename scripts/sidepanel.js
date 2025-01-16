@@ -1,70 +1,123 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const nextStepButton = document.getElementById("nextStep");
-  const instructionsContainer = document.getElementById("instructions-container");
-  const analysisContainer = document.getElementById("analysis-output");
-  const elementOrderList = document.getElementById("element-order-list");
-
-  // Create the element if it doesn't exist
-  if (!elementOrderList) {
-    const newElementOrderList = document.createElement("div");
-    newElementOrderList.id = "element-order-list";
-    document.body.appendChild(newElementOrderList);
+class SidePanelManager {
+  constructor() {
+    this.initializeElements();
+    this.setupEventListeners();
+    this.triggerNextStepOnLoad();  // Trigger the next step directly on load
   }
 
-  // Debug log helper
-  function debugLog(message, data = null) {
-    console.log(`[DEBUG] ${message}`, data);
+  initializeElements() {
+    // We no longer need the 'nextStep' button
+    this.instructionsContainer = document.getElementById("instructions-container");
+    this.analysisOutput = document.getElementById("analysis-output");
+    this.errorMessage = document.getElementById("error-message");
+
+    // Chat-related elements
+    this.chatInput = document.getElementById("chat-input");
+    this.sendChatButton = document.getElementById("send-chat");
+    this.chatOutput = document.getElementById("chat-output");
   }
 
-  // Message Listener: Update side panel content
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  setupEventListeners() {
+    chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
+
+    // Chat send button event listener
+    this.sendChatButton.addEventListener("click", () => this.handleSendChat());
+  }
+
+  // Trigger the next step directly when the side panel loads
+  async triggerNextStepOnLoad() {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const { currentPlatform } = await chrome.storage.local.get("currentPlatform");
+
+      if (!currentPlatform) {
+        this.showError("Platform is not specified. Please set it before proceeding.");
+        return;
+      }
+
+      await chrome.tabs.sendMessage(tab.id, {
+        action: "nextStep",
+        platform: currentPlatform,
+      });
+    } catch (error) {
+      this.showError("Failed to process next step: " + error.message);
+    }
+  }
+
+  // Handle send chat interaction
+  async handleSendChat() {
+    const userMessage = this.chatInput.value.trim();
+    if (!userMessage) {
+      this.showError("Please enter a message.");
+      return;
+    }
+
+    try {
+      // Display user's message in the chat output
+      this.chatOutput.innerHTML += `<div class="user-message">${userMessage}</div>`;
+      this.chatInput.value = ""; // Clear input field
+
+      // Retrieve platform info (e.g., "AWS" or "Heroku") from storage
+      const { currentPlatform } = await chrome.storage.local.get("currentPlatform");
+
+      if (!currentPlatform) {
+        this.showError("Platform is not specified.");
+        return;
+      }
+
+      // Send message to chat endpoint
+      const response = await fetch("http://localhost:5000/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          platform: currentPlatform,
+          issue: userMessage,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with status ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Display chatbot's response in the chat output
+      this.chatOutput.innerHTML += `<div class="bot-message">${data.response}</div>`;
+      this.chatOutput.scrollTop = this.chatOutput.scrollHeight; // Auto-scroll to the latest message
+    } catch (error) {
+      this.showError("Failed to send chat message: " + error.message);
+    }
+  }
+
+  // Handle receiving message from content script (to update panel)
+  handleMessage(message, sender, sendResponse) {
     if (message.action === "updateSidePanel") {
-      debugLog("Message received in side panel:", message);
-
-      if (instructionsContainer) {
-        instructionsContainer.textContent = message.description;
-      } else {
-        console.error("Instructions container not found!");
-      }
-
-      // Display analysis and element order if available
-      if (message.analysis && analysisContainer) {
-        analysisContainer.textContent = message.analysis;
-      }
-
+      this.updatePanel(message);
       sendResponse({ status: "success" });
     }
-  });
+  }
 
-  // Add event listener for "Next Step" button
-  nextStepButton.addEventListener("click", () => {
-    debugLog("Next step button clicked");
-  
-    chrome.storage.local.get("currentPlatform", (data) => {
-      const platform = data.currentPlatform || "unknown";
-  
-      chrome.runtime.sendMessage(
-        { action: "nextStep", platform },
-        (response) => {
-          if (response) {
-            debugLog("Received response:", response);
-  
-            if (response.status === "success") {
-              instructionsContainer.textContent = response.description || "No further instructions.";
-              debugLog("Next step processed successfully", response);
-            } else {
-              console.error("Failed to fetch the next step: ", response);
-              instructionsContainer.textContent = "Error: Unable to process the next step.";
-            }
-          } else {
-            console.error("No response received.");
-            instructionsContainer.textContent = "Error: No response received.";
-          }
-        }
-      );
-    });
-  });  
+  // Update side panel with new data (including analysis)
+  updatePanel(data) {
+    // Update analysis output with relevant content for the new step/page
+    if (data.analysis) {
+      this.analysisOutput.textContent = data.analysis;
+    }
 
-  // Initial load message
-  instructionsContainer.textContent = "Welcome! Click 'Next Step' to begin.";
+    // Ensure chat output is separate from the analysis
+    if (data.analysis && !this.chatOutput.innerHTML.includes(data.analysis)) {
+      // Optionally: Append analysis messages to the analysis output
+      // this.chatOutput.innerHTML += `<div class="bot-message">${data.analysis}</div>`;
+    }
+  }
+
+  // Show error messages if any
+  showError(message) {
+    this.errorMessage.textContent = message;
+  }
+}
+
+// Initialize the side panel
+document.addEventListener("DOMContentLoaded", () => {
+  new SidePanelManager();
 });
