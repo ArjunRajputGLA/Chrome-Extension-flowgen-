@@ -10,14 +10,16 @@
     "sidePanel",
     "tabs",
     "storage",
-    "scripting"
+    "scripting",
+    "webNavigation"
   ],
   "host_permissions": [
     "*://*.netlify.com/*",
     "*://*.vercel.com/*",
     "*://*.github.io/*",
     "*://*.render.com/*",
-    "*://cloud.google.com/*",
+    "*://*.cloud.google.com/*",
+    "*://console.cloud.google.com/*",
     "*://localhost/*"
   ],
   "content_scripts": [
@@ -27,7 +29,8 @@
         "*://*.vercel.com/*",
         "*://*.github.io/*",
         "*://*.render.com/*",
-        "*://cloud.google.com/*"
+        "*://*.cloud.google.com/*",
+        "*://console.cloud.google.com/*"
       ],
       "js": ["content.js"]
     }

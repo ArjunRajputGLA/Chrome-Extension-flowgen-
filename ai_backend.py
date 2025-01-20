@@ -8,7 +8,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Configure the Gemini model
-genai.configure(api_key="AIzaSyB2GLJdOyP0C-6k5h55SL9NmL6lsi8gNdw")
+genai.configure(api_key="AIzaSyD0dJZDn3fpgZ2DV39b7sKPzU4m40BgiAU")
 model = genai.GenerativeModel("gemini-1.5-pro")
 
 # Initialize Flask app
